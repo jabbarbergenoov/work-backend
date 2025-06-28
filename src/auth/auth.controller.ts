@@ -3,6 +3,7 @@ import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { LoginAuthDto } from './dto/login-auth.dto';
 import { AuthGuard } from '@nestjs/passport';
+import { Response } from 'express';
 
 @Controller('auth')
 export class AuthController {
@@ -21,21 +22,29 @@ export class AuthController {
 
   @Post('/refresh')
   refresh(@Body('refreshToken') refreshToken: string) {
+    console.log('🔄 Refresh token:', refreshToken);
     return this.authService.refresh(refreshToken);
   }
 
   @Get('google')
   @UseGuards(AuthGuard('google'))
   googleLogin() {
-    // Инициирует Google OAuth flow
+
   }
 
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
-  googleLoginCallback(@Req() req, @Res() res: Response) {
-    // Здесь у вас есть доступ к пользователю через req.user
-    // Создайте JWT токен и перенаправьте на фронтенд
-    const jwt = 'ваш_сгенерированный_jwt_токен';
-    res.redirect(`${process.env.FRONTEND_URL}/auth/callback?token=${jwt}`);
+  async googleLoginCallback(@Req() req, @Res() res: Response) {
+    const googleUser = req.user;
+
+    const jwt = await this.authService.validateGoogleUser(googleUser);
+
+    const query = new URLSearchParams({
+      accessToken: jwt.accessToken,
+      refreshToken: jwt.refreshToken,
+    }).toString();
+
+    res.redirect(`${process.env.FRONTEND_URL}/auth/callback?${query}`);
   }
+
 }

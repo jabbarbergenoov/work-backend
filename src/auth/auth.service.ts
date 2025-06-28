@@ -9,7 +9,26 @@ export class AuthService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly jwtService: JwtService,
+
   ) { }
+  private generateJwt(user: { id: string; email: string }) {
+    const payload = { sub: user.id, email: user.email };
+
+    const accessToken = this.jwtService.sign(payload, {
+      expiresIn: '15m',
+    });
+
+    const refreshToken = this.jwtService.sign(payload, {
+      expiresIn: '7d',
+    });
+
+    return {
+      accessToken,
+      refreshToken,
+      user,
+    };
+  }
+
   async create(createAuthDto: CreateAuthDto) {
     const { email, firstName, lastName } = createAuthDto;
 
@@ -81,6 +100,8 @@ export class AuthService {
       const user = await this.prismaService.user.findUnique({
         where: { id: payload.sub },
       });
+      console.log('🔄 Refresh token payload:', payload)
+      console.log('🔄 Refresh token user:', user);
 
       if (!user) {
         throw new ConflictException('Foydalanuvchi topilmadi');
@@ -105,4 +126,34 @@ export class AuthService {
       throw new ConflictException('Noto‘g‘ri yoki eskirgan refresh token');
     }
   }
+
+
+  async validateGoogleUser(googleUser: {
+    email: string;
+    firstName: string;
+    lastName: string;
+    picture: string;
+  }) {
+    let user = await this.prismaService.user.findUnique({
+      where: { email: googleUser.email },
+    });
+
+    if (!user) {
+      user = await this.prismaService.user.create({
+        data: {
+          email: googleUser.email,
+          firstName: googleUser.firstName,
+          lastName: googleUser.lastName,
+          avatar: googleUser.picture,
+          provider: 'google',
+        },
+      });
+    }
+
+    return this.generateJwt({
+      id: user.id.toString(),
+      email: user.email,
+    });
+  }
+
 }

@@ -20,5 +20,49 @@ model User {
   lastName  String?
   email     String   @unique
   role      String?
+  provider  String?
+  avatar    String?
   createdAt DateTime @default(now())
+}
+
+model Courses {
+  id        Int        @id @default(autoincrement())
+  name      String     @unique
+  image     String
+  slug      String     @unique
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  Slugdata  Slugdata[]
+}
+
+model Slugdata {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String
+  image       String
+  module      String
+  organish    String[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  modules   ModuleOnSlugdata[]
+  Courses   Courses?           @relation(fields: [coursesId], references: [id])
+  coursesId Int?
+}
+
+model Module {
+  id    Int    @id @default(autoincrement())
+  title String
+
+  slugdatas ModuleOnSlugdata[]
+}
+
+model ModuleOnSlugdata {
+  slugdataId Int
+  moduleId   Int
+
+  slugdata Slugdata @relation(fields: [slugdataId], references: [id])
+  module   Module   @relation(fields: [moduleId], references: [id])
+
+  @@id([slugdataId, moduleId])
 }
