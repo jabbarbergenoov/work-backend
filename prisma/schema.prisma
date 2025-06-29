@@ -44,6 +44,7 @@ model Slugdata {
   organish    String[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  slug        String?  @unique
 
   modules   ModuleOnSlugdata[]
   Courses   Courses?           @relation(fields: [coursesId], references: [id])

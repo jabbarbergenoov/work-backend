@@ -15,6 +15,9 @@ export class CreateSlugdataDto {
 
     @IsString()
     description: string;
+    
+    @IsString()
+    slug: string;
 
     @IsString()
     image: string;
